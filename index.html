@@ -717,6 +717,25 @@
             notesEditor.innerHTML = localStorage.getItem('lecture-notes-html');
             updateWordCount();
         }
+
+        // Handle paste events for ChatGPT content
+        notesEditor.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            
+            // Clean up ChatGPT formatting while preserving basic structure
+            const cleanedText = text
+                .replace(/^\s*[\r\n]/gm, '') // Remove empty lines
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italics
+                .replace(/`{3}([\s\S]*?)`{3}/g, '<pre><code>$1</code></pre>') // Code blocks
+                .replace(/`(.*?)`/g, '<code>$1</code>') // Inline code
+                .replace(/#+\s*(.*?)(?:\n|$)/g, '<h2>$1</h2>') // Headers
+                .replace(/- (.*?)(?:\n|$)/g, '<li>$1</li>') // Lists
+                .replace(/\n/g, '<br>'); // Line breaks
+
+            document.execCommand('insertHTML', false, cleanedText);
+        });
         
         // Add placeholder functionality
         notesEditor.addEventListener('focus', function() {
@@ -893,15 +912,28 @@
             return date.toLocaleDateString('en-US', options);
         }
         
-        // Export to PDF
+        // Export to PDF - Fixed duplicate content issue
         exportPdfBtn.addEventListener('click', async () => {
             try {
                 showStatus('Generating PDF...', 'success');
-                
-                // Add loading effect
                 exportPdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+                // Create a clone of the content to avoid affecting the original
+                const contentClone = document.createElement('div');
+                contentClone.innerHTML = notesEditor.innerHTML;
                 
-                // Create a temporary div for PDF generation
+                // Clean ChatGPT-specific formatting that might not render well in PDF
+                const codeBlocks = contentClone.querySelectorAll('pre');
+                codeBlocks.forEach(block => {
+                    block.style.whiteSpace = 'pre-wrap';
+                    block.style.fontFamily = "'JetBrains Mono', monospace";
+                    block.style.backgroundColor = '#1e293b';
+                    block.style.color = '#f8fafc';
+                    block.style.padding = '15px';
+                    block.style.borderRadius = '8px';
+                });
+
+                // Create PDF container
                 const pdfContainer = document.createElement('div');
                 pdfContainer.style.width = '210mm';
                 pdfContainer.style.minHeight = '297mm';
@@ -913,7 +945,7 @@
                 pdfContainer.style.fontFamily = "'Poppins', sans-serif";
                 pdfContainer.style.color = '#1e293b';
                 pdfContainer.style.lineHeight = '1.6';
-                
+
                 // Generate current date string
                 const now = new Date();
                 const dateString = now.toLocaleDateString('en-US', {
@@ -923,8 +955,8 @@
                     hour: '2-digit',
                     minute: '2-digit'
                 });
-                
-                // Create PDF content with professional styling
+
+                // Build PDF content
                 pdfContainer.innerHTML = `
                     <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #7c3aed;">
                         <h1 style="font-size: 28px; color: #7c3aed; margin-bottom: 10px; font-weight: 600;">${docTitle.value || 'Untitled Document'}</h1>
@@ -933,17 +965,17 @@
                     </div>
                     
                     <div style="font-size: 15px; line-height: 1.8;">
-                        ${notesEditor.innerHTML || "<p style='color: #64748b; font-style: italic;'>No content available.</p>"}
+                        ${contentClone.innerHTML || "<p style='color: #64748b; font-style: italic;'>No content available.</p>"}
                     </div>
                     
                     <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
                         Generated with Starlet Notes on ${dateString}
                     </div>
                 `;
-                
+
                 document.body.appendChild(pdfContainer);
-                
-                // Convert to canvas then to PDF
+
+                // Convert to canvas
                 const canvas = await html2canvas(pdfContainer, {
                     scale: 2,
                     logging: false,
@@ -951,47 +983,49 @@
                     scrollX: 0,
                     scrollY: 0,
                     windowWidth: pdfContainer.scrollWidth,
-                    windowHeight: pdfContainer.scrollHeight
+                    windowHeight: pdfContainer.scrollHeight,
+                    backgroundColor: '#ffffff'
                 });
-                
+
                 document.body.removeChild(pdfContainer);
-                
+
                 // Create PDF
                 const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgData = canvas.toDataURL('image/png');
                 const imgWidth = 210; // A4 width in mm
-                const pageHeight = 297; // A4 height in mm
-                const imgHeight = canvas.height * imgWidth / canvas.width;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
                 
-                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                // Add first page
+                pdf.addImage(canvas, 'PNG', 0, 0, imgWidth, imgHeight);
                 
-                // Handle multi-page documents
+                // Add additional pages if needed
                 let heightLeft = imgHeight;
                 let position = 0;
+                const pageHeight = 297; // A4 height in mm
                 
-                while (heightLeft >= 0) {
+                while (heightLeft > 0) {
                     position = heightLeft - pageHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
+                    if (position > 0) {
+                        pdf.addPage();
+                        pdf.addImage(canvas, 'PNG', 0, -position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    } else {
+                        break;
+                    }
                 }
-                
+
                 // Set document metadata
                 pdf.setProperties({
                     title: docTitle.value || 'Untitled Document',
                     author: authorName.value || '',
                     creator: 'Starlet Notes'
                 });
-                
+
                 // Download the PDF
                 const filename = (docTitle.value || 'document').replace(/[^a-z0-9]/gi, '_').toLowerCase();
                 pdf.save(`${filename}.pdf`);
-                
-                // Reset button state
                 exportPdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> PDF';
-                
                 showStatus('PDF exported successfully!', 'success');
-                
+
             } catch (error) {
                 console.error('Error generating PDF:', error);
                 showStatus('Error generating PDF: ' + error.message, 'error');
