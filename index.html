@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.0/mammoth.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -572,6 +573,174 @@
             visibility: visible;
             transform: translateX(-50%) translateY(-5px);
         }
+        
+        /* File upload area */
+        .file-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border: 2px dashed var(--light-gray);
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        
+        .file-upload:hover {
+            border-color: var(--primary);
+            background: rgba(124, 58, 237, 0.05);
+        }
+        
+        .file-upload i {
+            font-size: 40px;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .file-upload p {
+            text-align: center;
+            color: var(--gray);
+            margin-bottom: 10px;
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* AI content formatting */
+        .ai-content {
+            background: rgba(247, 247, 248, 0.8);
+            border-left: 4px solid #10a37f;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .ai-content pre {
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        
+        .ai-content code {
+            font-family: 'JetBrains Mono', monospace;
+            background: transparent;
+            padding: 0;
+        }
+        
+        .ai-content ul, 
+        .ai-content ol {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+        
+        .ai-content li {
+            margin-bottom: 5px;
+        }
+        
+        .ai-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 15px;
+            margin: 15px 0;
+            color: #666;
+            font-style: italic;
+        }
+        
+        /* Dark mode toggle */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--dark);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 100;
+            transition: var(--transition);
+        }
+        
+        .dark-mode-toggle:hover {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Dark mode styles */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .container {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        body.dark-mode .editor-container,
+        body.dark-mode .card,
+        body.dark-mode .form-control {
+            background: #1e293b;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode #lecture-notes {
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .editor-toolbar button {
+            background: #334155;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .editor-toolbar button:hover {
+            background: var(--primary);
+        }
+        
+        body.dark-mode .form-control {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .formatting-help code {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .export-btn {
+            background: #334155;
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        
+        body.dark-mode .file-upload {
+            border-color: #475569;
+        }
+        
+        body.dark-mode .file-upload:hover {
+            background: rgba(124, 58, 237, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -579,8 +748,8 @@
         <div class="header">
             <h1><i class="fas fa-book-open"></i> Starlet Notes</h1>
             <div class="header-actions">
-                <button class="btn btn-outline" id="clear-notes" data-tooltip="Clear all notes">
-                    <i class="fas fa-trash-alt"></i> Clear
+                <button class="btn btn-outline" id="clear-notes" data-tooltip="Clear all notes and settings">
+                    <i class="fas fa-trash-alt"></i> Clear All
                 </button>
                 <button class="btn btn-primary" id="save-notes" data-tooltip="Save to browser storage">
                     <i class="fas fa-save"></i> Save
@@ -618,6 +787,23 @@
             </div>
             
             <div class="sidebar">
+                <div class="card">
+                    <h3><i class="fas fa-file-import"></i> Import Documents</h3>
+                    
+                    <div class="file-upload" id="file-upload-area">
+                        <i class="fas fa-file-upload"></i>
+                        <p>Drag & drop files here or click to browse</p>
+                        <input type="file" id="file-input" accept=".docx,.pdf,.txt,.html" style="display: none;">
+                        <button class="btn btn-outline" id="browse-files">
+                            <i class="fas fa-folder-open"></i> Browse Files
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Supported formats: DOCX, PDF, TXT, HTML</label>
+                    </div>
+                </div>
+                
                 <div class="card">
                     <h3><i class="fas fa-file-export"></i> Export Settings</h3>
                     
@@ -676,6 +862,7 @@
                         </ul>
                         <p><strong>Code Blocks:</strong> Wrap code in <code>```language</code> for syntax highlighting (e.g., <code>```javascript</code>).</p>
                         <p><strong>Math Formulas:</strong> Use <code>$...$</code> for inline and <code>$$...$$</code> for block equations.</p>
+                        <p><strong>AI Content:</strong> Paste ChatGPT content directly - formatting will be preserved.</p>
                     </div>
                 </div>
             </div>
@@ -684,6 +871,10 @@
 
     <div class="fab" id="scroll-to-top" data-tooltip="Scroll to top">
         <i class="fas fa-arrow-up"></i>
+    </div>
+    
+    <div class="dark-mode-toggle" id="dark-mode-toggle" data-tooltip="Toggle Dark Mode">
+        <i class="fas fa-moon"></i>
     </div>
 
     <script>
@@ -708,34 +899,91 @@
         const docDate = document.getElementById('document-date');
         const formattingToolbar = document.getElementById('formatting-toolbar');
         const scrollToTopBtn = document.getElementById('scroll-to-top');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const fileUploadArea = document.getElementById('file-upload-area');
+        const fileInput = document.getElementById('file-input');
+        const browseFilesBtn = document.getElementById('browse-files');
         
         // Set current date as default
         docDate.valueAsDate = new Date();
         
+        // Add export in progress flag
+        let isExporting = false;
+
         // Load saved notes if they exist
         if (localStorage.getItem('lecture-notes-html')) {
             notesEditor.innerHTML = localStorage.getItem('lecture-notes-html');
             updateWordCount();
         }
 
-        // Handle paste events for ChatGPT content
+        // Handle paste events for AI content (ChatGPT, etc.)
         notesEditor.addEventListener('paste', function(e) {
             e.preventDefault();
             const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            const html = (e.clipboardData || window.clipboardData).getData('text/html');
             
-            // Clean up ChatGPT formatting while preserving basic structure
-            const cleanedText = text
+            // If HTML is available and looks like AI content, use it
+            if (html && (html.includes('chat.openai.com') || html.includes('markdown'))) {
+                const cleanedHtml = cleanAiHtml(html);
+                document.execCommand('insertHTML', false, cleanedHtml);
+            } else {
+                // Otherwise, clean up the plain text version
+                const cleanedText = cleanAiText(text);
+                document.execCommand('insertHTML', false, cleanedText);
+            }
+            
+            updateWordCount();
+        });
+        
+        // Clean HTML from AI sources
+        function cleanAiHtml(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Remove unwanted elements
+            const unwantedElements = doc.querySelectorAll('meta, style, script, link, head, title, iframe, noscript');
+            unwantedElements.forEach(el => el.remove());
+            
+            // Convert AI-specific formatting to standard HTML
+            const preElements = doc.querySelectorAll('pre');
+            preElements.forEach(pre => {
+                pre.innerHTML = `<code>${pre.textContent}</code>`;
+                pre.className = 'ai-code-block';
+            });
+            
+            // Convert lists
+            const lists = doc.querySelectorAll('ul, ol');
+            lists.forEach(list => {
+                list.querySelectorAll('li').forEach(li => {
+                    if (li.textContent.trim() === '') li.remove();
+                });
+            });
+            
+            // Create a wrapper div for AI content
+            const wrapper = document.createElement('div');
+            wrapper.className = 'ai-content';
+            wrapper.innerHTML = doc.body.innerHTML;
+            
+            return wrapper.outerHTML;
+        }
+        
+        // Clean plain text from AI sources
+        function cleanAiText(text) {
+            // Convert markdown-style formatting to HTML
+            let cleanedText = text
                 .replace(/^\s*[\r\n]/gm, '') // Remove empty lines
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
                 .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italics
                 .replace(/`{3}([\s\S]*?)`{3}/g, '<pre><code>$1</code></pre>') // Code blocks
                 .replace(/`(.*?)`/g, '<code>$1</code>') // Inline code
-                .replace(/#+\s*(.*?)(?:\n|$)/g, '<h2>$1</h2>') // Headers
-                .replace(/- (.*?)(?:\n|$)/g, '<li>$1</li>') // Lists
+                .replace(/^#\s+(.*?)(?:\n|$)/gm, '<h2>$1</h2>') // Headers
+                .replace(/^-\s+(.*?)(?:\n|$)/gm, '<li>$1</li>') // Lists
+                .replace(/^\d+\.\s+(.*?)(?:\n|$)/gm, '<li>$1</li>') // Numbered lists
                 .replace(/\n/g, '<br>'); // Line breaks
-
-            document.execCommand('insertHTML', false, cleanedText);
-        });
+            
+            // Wrap in AI content container
+            return `<div class="ai-content">${cleanedText}</div>`;
+        }
         
         // Add placeholder functionality
         notesEditor.addEventListener('focus', function() {
@@ -762,18 +1010,35 @@
             }, 2000);
         });
         
-        // Clear notes
+        // Enhanced Clear All functionality
         clearBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to clear all notes?')) {
+            if (confirm('Are you sure you want to clear ALL content and settings?\nThis will:\n- Clear all notes\n- Reset document title\n- Reset author name\n- Clear saved data')) {
+                // Clear editor content
                 notesEditor.innerHTML = '';
+                
+                // Reset form fields
+                docTitle.value = 'My Notes';
+                authorName.value = '';
+                docDate.valueAsDate = new Date();
+                
+                // Clear localStorage
                 localStorage.removeItem('lecture-notes-html');
-                showStatus('Notes cleared!', 'success');
+                localStorage.removeItem('darkMode');
+                
+                // Reset dark mode if active
+                if (document.body.classList.contains('dark-mode')) {
+                    document.body.classList.remove('dark-mode');
+                    darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                    darkModeToggle.setAttribute('data-tooltip', 'Switch to Dark Mode');
+                }
+                
                 updateWordCount();
+                showStatus('All content and settings cleared!', 'success');
                 
                 // Add animation effect
-                clearBtn.innerHTML = '<i class="fas fa-check"></i> Cleared!';
+                clearBtn.innerHTML = '<i class="fas fa-check"></i> Cleared All!';
                 setTimeout(() => {
-                    clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear';
+                    clearBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear All';
                 }, 2000);
             }
         });
@@ -791,6 +1056,11 @@
                 return;
             }
             
+            if (command === 'insertImage') {
+                insertImage();
+                return;
+            }
+            
             document.execCommand(command, false, value);
             notesEditor.focus();
             
@@ -800,6 +1070,30 @@
                 button.style.transform = '';
             }, 100);
         });
+        
+        // Insert image from URL
+        function insertImage() {
+            const url = prompt('Enter the image URL:');
+            if (url) {
+                // Validate URL
+                try {
+                    new URL(url);
+                    document.execCommand('insertImage', false, url);
+                    
+                    // Add styling to the image
+                    const images = notesEditor.getElementsByTagName('img');
+                    const lastImage = images[images.length - 1];
+                    if (lastImage) {
+                        lastImage.style.maxWidth = '100%';
+                        lastImage.style.height = 'auto';
+                        lastImage.style.borderRadius = '8px';
+                        lastImage.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+                    }
+                } catch (e) {
+                    showStatus('Please enter a valid URL', 'error');
+                }
+            }
+        }
         
         // Insert code block
         function insertCodeBlock() {
@@ -912,9 +1206,12 @@
             return date.toLocaleDateString('en-US', options);
         }
         
-        // Export to PDF - Fixed duplicate content issue
+        // Enhanced PDF export with duplicate prevention
         exportPdfBtn.addEventListener('click', async () => {
+            if (isExporting) return;
+            
             try {
+                isExporting = true;
                 showStatus('Generating PDF...', 'success');
                 exportPdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
@@ -922,7 +1219,17 @@
                 const contentClone = document.createElement('div');
                 contentClone.innerHTML = notesEditor.innerHTML;
                 
-                // Clean ChatGPT-specific formatting that might not render well in PDF
+                // Process AI content blocks
+                const aiBlocks = contentClone.querySelectorAll('.ai-content');
+                aiBlocks.forEach(block => {
+                    block.style.backgroundColor = '#f8fafc';
+                    block.style.borderLeft = '4px solid #10a37f';
+                    block.style.padding = '15px';
+                    block.style.margin = '15px 0';
+                    block.style.borderRadius = '0 8px 8px 0';
+                });
+                
+                // Process code blocks
                 const codeBlocks = contentClone.querySelectorAll('pre');
                 codeBlocks.forEach(block => {
                     block.style.whiteSpace = 'pre-wrap';
@@ -931,6 +1238,7 @@
                     block.style.color = '#f8fafc';
                     block.style.padding = '15px';
                     block.style.borderRadius = '8px';
+                    block.style.overflowX = 'auto';
                 });
 
                 // Create PDF container
@@ -956,7 +1264,7 @@
                     minute: '2-digit'
                 });
 
-                // Build PDF content
+                // Build PDF content with improved structure
                 pdfContainer.innerHTML = `
                     <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #7c3aed;">
                         <h1 style="font-size: 28px; color: #7c3aed; margin-bottom: 10px; font-weight: 600;">${docTitle.value || 'Untitled Document'}</h1>
@@ -975,7 +1283,7 @@
 
                 document.body.appendChild(pdfContainer);
 
-                // Convert to canvas
+                // Convert to canvas with higher quality settings
                 const canvas = await html2canvas(pdfContainer, {
                     scale: 2,
                     logging: false,
@@ -984,18 +1292,20 @@
                     scrollY: 0,
                     windowWidth: pdfContainer.scrollWidth,
                     windowHeight: pdfContainer.scrollHeight,
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    allowTaint: true,
+                    letterRendering: true
                 });
 
                 document.body.removeChild(pdfContainer);
 
-                // Create PDF
-                const pdf = new jsPDF('p', 'mm', 'a4');
+                // Create PDF with improved metadata
+                const pdf = new jsPDF('p', 'mm', 'a4', true);
                 const imgWidth = 210; // A4 width in mm
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
                 
                 // Add first page
-                pdf.addImage(canvas, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.addImage(canvas, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
                 
                 // Add additional pages if needed
                 let heightLeft = imgHeight;
@@ -1006,19 +1316,31 @@
                     position = heightLeft - pageHeight;
                     if (position > 0) {
                         pdf.addPage();
-                        pdf.addImage(canvas, 'PNG', 0, -position, imgWidth, imgHeight);
+                        pdf.addImage(canvas, 'PNG', 0, -position, imgWidth, imgHeight, undefined, 'FAST');
                         heightLeft -= pageHeight;
                     } else {
                         break;
                     }
                 }
 
-                // Set document metadata
+                // Set comprehensive document metadata
                 pdf.setProperties({
                     title: docTitle.value || 'Untitled Document',
                     author: authorName.value || '',
-                    creator: 'Starlet Notes'
+                    subject: 'Notes exported from Starlet Notes',
+                    keywords: 'notes, export, pdf, starlet',
+                    creator: 'Starlet Notes',
+                    producer: 'Starlet Notes PDF Generator'
                 });
+
+                // Add page numbers
+                const pageCount = pdf.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    pdf.setPage(i);
+                    pdf.setFontSize(10);
+                    pdf.setTextColor(100);
+                    pdf.text(`Page ${i} of ${pageCount}`, pdf.internal.pageSize.getWidth() - 20, pdf.internal.pageSize.getHeight() - 10);
+                }
 
                 // Download the PDF
                 const filename = (docTitle.value || 'document').replace(/[^a-z0-9]/gi, '_').toLowerCase();
@@ -1030,15 +1352,18 @@
                 console.error('Error generating PDF:', error);
                 showStatus('Error generating PDF: ' + error.message, 'error');
                 exportPdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> PDF';
+            } finally {
+                isExporting = false;
             }
         });
         
-        // Export to DOCX
+        // Enhanced DOCX export with better AI content handling
         exportDocxBtn.addEventListener('click', async () => {
+            if (isExporting) return;
+            
             try {
+                isExporting = true;
                 showStatus('Generating DOCX document...', 'success');
-                
-                // Add loading effect
                 exportDocxBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
                 
                 // Create paragraphs from the content
@@ -1069,11 +1394,11 @@
                     );
                 }
                 
-                // Convert HTML content to DOCX paragraphs
+                // Convert HTML content to DOCX paragraphs with better AI content handling
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = notesEditor.innerHTML;
                 
-                // Process each node
+                // Process each node with improved AI content recognition
                 const nodes = tempDiv.childNodes;
                 for (const node of nodes) {
                     if (node.nodeType === Node.TEXT_NODE) {
@@ -1088,8 +1413,16 @@
                     } else if (node.nodeType === Node.ELEMENT_NODE) {
                         const tagName = node.tagName.toLowerCase();
                         const text = node.textContent;
+                        const isAiContent = node.classList.contains('ai-content');
                         
                         if (!text.trim()) continue;
+                        
+                        // Handle AI content blocks
+                        if (isAiContent) {
+                            const aiParagraphs = processAiContent(node);
+                            paragraphs.push(...aiParagraphs);
+                            continue;
+                        }
                         
                         switch (tagName) {
                             case 'h1':
@@ -1181,7 +1514,7 @@
                     })
                 );
                 
-                // Create the document
+                // Create the document with improved styling
                 const doc = new Document({
                     title: docTitle.value || 'Untitled Document',
                     description: 'Exported from Starlet Notes',
@@ -1199,6 +1532,18 @@
                                 paragraph: {
                                     spacing: { line: 250 },
                                     shading: { fill: 'F5F5F5' }
+                                }
+                            },
+                            {
+                                id: 'AIContent',
+                                name: 'AI Content',
+                                run: {
+                                    color: '555555'
+                                },
+                                paragraph: {
+                                    spacing: { line: 276 },
+                                    indent: { left: 200 },
+                                    border: { left: { size: 8, color: '10a37f' } }
                                 }
                             }
                         ]
@@ -1224,18 +1569,105 @@
                 console.error('Error generating DOCX:', error);
                 showStatus('Error generating DOCX: ' + error.message, 'error');
                 exportDocxBtn.innerHTML = '<i class="fas fa-file-word"></i> DOCX';
+            } finally {
+                isExporting = false;
             }
         });
         
-        // Export to HTML
+        // Process AI content for DOCX export
+        function processAiContent(node) {
+            const paragraphs = [];
+            const children = node.childNodes;
+            
+            // Add AI content header
+            paragraphs.push(
+                new Paragraph({
+                    text: 'AI Generated Content',
+                    style: 'AIContent',
+                    heading: HeadingLevel.HEADING_4,
+                    spacing: { after: 100 }
+                })
+            );
+            
+            for (const child of children) {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    if (child.textContent.trim()) {
+                        paragraphs.push(
+                            new Paragraph({
+                                text: child.textContent,
+                                style: 'AIContent',
+                                spacing: { after: 100 }
+                            })
+                        );
+                    }
+                } else if (child.nodeType === Node.ELEMENT_NODE) {
+                    const tagName = child.tagName.toLowerCase();
+                    const text = child.textContent;
+                    
+                    if (!text.trim()) continue;
+                    
+                    switch (tagName) {
+                        case 'pre':
+                            paragraphs.push(
+                                new Paragraph({
+                                    text: text,
+                                    style: 'Code',
+                                    spacing: { after: 100 }
+                                })
+                            );
+                            break;
+                        case 'ul':
+                        case 'ol':
+                            const items = child.querySelectorAll('li');
+                            for (const item of items) {
+                                paragraphs.push(
+                                    new Paragraph({
+                                        text: item.textContent,
+                                        bullet: { level: 0 },
+                                        style: 'AIContent',
+                                        spacing: { after: 50 }
+                                    })
+                                );
+                            }
+                            break;
+                        default:
+                            paragraphs.push(
+                                new Paragraph({
+                                    text: text,
+                                    style: 'AIContent',
+                                    spacing: { after: 100 }
+                                })
+                            );
+                    }
+                }
+            }
+            
+            return paragraphs;
+        }
+        
+        // Export to HTML with improved AI content handling
         exportHtmlBtn.addEventListener('click', () => {
+            if (isExporting) return;
+            
             try {
+                isExporting = true;
                 showStatus('Generating HTML file...', 'success');
-                
-                // Add loading effect
                 exportHtmlBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
                 
-                // Create complete HTML document
+                // Process AI content blocks for HTML export
+                const contentClone = document.createElement('div');
+                contentClone.innerHTML = notesEditor.innerHTML;
+                
+                const aiBlocks = contentClone.querySelectorAll('.ai-content');
+                aiBlocks.forEach(block => {
+                    block.style.backgroundColor = '#f8fafc';
+                    block.style.borderLeft = '4px solid #10a37f';
+                    block.style.padding = '15px';
+                    block.style.margin = '15px 0';
+                    block.style.borderRadius = '0 8px 8px 0';
+                });
+                
+                // Create complete HTML document with improved structure
                 const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1295,6 +1727,38 @@
         a:hover {
             text-decoration: underline;
         }
+        .ai-content {
+            background: #f8fafc;
+            border-left: 4px solid #10a37f;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .ai-content pre {
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 6px;
+        }
+        .ai-content code {
+            font-family: 'JetBrains Mono', monospace;
+            background: transparent;
+            padding: 0;
+        }
+        .ai-content ul, 
+        .ai-content ol {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+        .ai-content li {
+            margin-bottom: 5px;
+        }
+        .ai-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 15px;
+            margin: 15px 0;
+            color: #666;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -1304,7 +1768,7 @@
         <p>Date: ${docDate.value ? getFormattedDate(new Date(docDate.value)) : getFormattedDate(new Date())}</p>
     </div>
     
-    ${notesEditor.innerHTML || '<p>No content available.</p>'}
+    ${contentClone.innerHTML || '<p>No content available.</p>'}
     
     <div class="footer">
         Generated with Starlet Notes on ${new Date().toLocaleDateString()} | © ${new Date().getFullYear()}
@@ -1325,21 +1789,36 @@
                 console.error('Error generating HTML:', error);
                 showStatus('Error generating HTML: ' + error.message, 'error');
                 exportHtmlBtn.innerHTML = '<i class="fas fa-file-code"></i> HTML';
+            } finally {
+                isExporting = false;
             }
         });
         
-        // Export to TXT
+        // Enhanced TXT export with better AI content handling
         exportTxtBtn.addEventListener('click', () => {
+            if (isExporting) return;
+            
             try {
+                isExporting = true;
                 showStatus('Generating plain text file...', 'success');
-                
-                // Add loading effect
                 exportTxtBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
                 
-                // Convert HTML to plain text
+                // Convert HTML to plain text with improved formatting
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = notesEditor.innerHTML;
-                let plainText = tempDiv.textContent || tempDiv.innerText || '';
+                
+                // Process AI content blocks
+                const aiBlocks = tempDiv.querySelectorAll('.ai-content');
+                aiBlocks.forEach(block => {
+                    // Add AI content marker
+                    const marker = document.createElement('div');
+                    marker.textContent = '=== AI GENERATED CONTENT ===';
+                    marker.style.fontWeight = 'bold';
+                    marker.style.margin = '10px 0';
+                    block.insertBefore(marker, block.firstChild);
+                });
+                
+                let plainText = convertHtmlToText(tempDiv);
                 
                 // Add header
                 const header = [
@@ -1369,15 +1848,65 @@
                 console.error('Error generating TXT:', error);
                 showStatus('Error generating TXT: ' + error.message, 'error');
                 exportTxtBtn.innerHTML = '<i class="fas fa-file-alt"></i> TXT';
+            } finally {
+                isExporting = false;
             }
         });
         
+        // Convert HTML to plain text with formatting
+        function convertHtmlToText(element) {
+            let text = '';
+            
+            for (const node of element.childNodes) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    text += node.textContent;
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    const tagName = node.tagName.toLowerCase();
+                    
+                    switch (tagName) {
+                        case 'div':
+                        case 'p':
+                            text += convertHtmlToText(node) + '\n\n';
+                            break;
+                        case 'br':
+                            text += '\n';
+                            break;
+                        case 'h1':
+                        case 'h2':
+                        case 'h3':
+                            text += '\n' + node.textContent.toUpperCase() + '\n\n';
+                            break;
+                        case 'ul':
+                        case 'ol':
+                            const items = node.querySelectorAll('li');
+                            for (const item of items) {
+                                text += '• ' + item.textContent + '\n';
+                            }
+                            text += '\n';
+                            break;
+                        case 'pre':
+                        case 'code':
+                            text += '\n```\n' + node.textContent + '\n```\n\n';
+                            break;
+                        case 'blockquote':
+                            text += '\n> ' + node.textContent.replace(/\n/g, '\n> ') + '\n\n';
+                            break;
+                        default:
+                            text += convertHtmlToText(node);
+                    }
+                }
+            }
+            
+            return text;
+        }
+        
         // Export all formats
         exportAllBtn.addEventListener('click', async () => {
+            if (isExporting) return;
+            
             try {
+                isExporting = true;
                 showStatus('Exporting all formats...', 'success');
-                
-                // Add loading effect
                 exportAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
                 
                 // We'll use a small delay between exports to avoid browser restrictions
@@ -1394,6 +1923,8 @@
                 console.error('Error during bulk export:', error);
                 showStatus('Error during bulk export: ' + error.message, 'error');
                 exportAllBtn.innerHTML = '<i class="fas fa-file-archive"></i> Export All Formats';
+            } finally {
+                isExporting = false;
             }
         });
         
@@ -1414,6 +1945,180 @@
                 scrollToTopBtn.style.visibility = 'hidden';
             }
         });
+        
+        // Dark mode toggle
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            
+            if (document.body.classList.contains('dark-mode')) {
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                darkModeToggle.setAttribute('data-tooltip', 'Switch to Light Mode');
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                darkModeToggle.setAttribute('data-tooltip', 'Switch to Dark Mode');
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        });
+        
+        // Check for saved dark mode preference
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            darkModeToggle.setAttribute('data-tooltip', 'Switch to Light Mode');
+        }
+        
+        // File upload functionality
+        browseFilesBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.style.borderColor = 'var(--primary)';
+            fileUploadArea.style.backgroundColor = 'rgba(124, 58, 237, 0.1)';
+        });
+        
+        fileUploadArea.addEventListener('dragleave', () => {
+            fileUploadArea.style.borderColor = 'var(--light-gray)';
+            fileUploadArea.style.backgroundColor = '';
+        });
+        
+        fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUploadArea.style.borderColor = 'var(--light-gray)';
+            fileUploadArea.style.backgroundColor = '';
+            
+            if (e.dataTransfer.files.length) {
+                handleFileUpload(e.dataTransfer.files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+        
+        // Handle file upload based on type
+        function handleFileUpload(file) {
+            const fileName = file.name.toLowerCase();
+            showStatus(`Processing ${file.name}...`, 'success');
+            
+            if (fileName.endsWith('.docx')) {
+                importDocxFile(file);
+            } else if (fileName.endsWith('.pdf')) {
+                showStatus('PDF import requires server-side processing', 'error');
+            } else if (fileName.endsWith('.txt')) {
+                importTextFile(file);
+            } else if (fileName.endsWith('.html') || fileName.endsWith('.htm')) {
+                importHtmlFile(file);
+            } else {
+                showStatus('Unsupported file format', 'error');
+            }
+        }
+        
+        // Import DOCX file using mammoth.js
+        function importDocxFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                const arrayBuffer = event.target.result;
+                
+                mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+                    .then(function(result) {
+                        const text = result.value;
+                        const messages = result.messages;
+                        
+                        // Process the text and insert into editor
+                        notesEditor.innerHTML = convertTextToHtml(text);
+                        updateWordCount();
+                        
+                        if (messages.length > 0) {
+                            showStatus('DOCX imported with some formatting issues', 'warning');
+                        } else {
+                            showStatus('DOCX file imported successfully!', 'success');
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('Error importing DOCX:', error);
+                        showStatus('Error importing DOCX: ' + error.message, 'error');
+                    });
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // Import text file
+        function importTextFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                const text = event.target.result;
+                notesEditor.innerHTML = convertTextToHtml(text);
+                updateWordCount();
+                showStatus('Text file imported successfully!', 'success');
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Import HTML file
+        function importHtmlFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                const html = event.target.result;
+                
+                // Create a temporary div to parse the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                // Extract body content or use the whole HTML if no body
+                const bodyContent = tempDiv.querySelector('body') || tempDiv;
+                
+                // Clean up the HTML before inserting
+                notesEditor.innerHTML = cleanImportedHtml(bodyContent.innerHTML);
+                updateWordCount();
+                showStatus('HTML file imported successfully!', 'success');
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Convert plain text to HTML with basic formatting
+        function convertTextToHtml(text) {
+            // Convert markdown-style formatting to HTML
+            let html = text
+                .replace(/^\s*[\r\n]/gm, '') // Remove empty lines
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italics
+                .replace(/`{3}([\s\S]*?)`{3}/g, '<pre><code>$1</code></pre>') // Code blocks
+                .replace(/`(.*?)`/g, '<code>$1</code>') // Inline code
+                .replace(/^#\s+(.*?)(?:\n|$)/gm, '<h2>$1</h2>') // Headers
+                .replace(/^-\s+(.*?)(?:\n|$)/gm, '<li>$1</li>') // Lists
+                .replace(/^\d+\.\s+(.*?)(?:\n|$)/gm, '<li>$1</li>') // Numbered lists
+                .replace(/\n/g, '<br>'); // Line breaks
+            
+            return html;
+        }
+        
+        // Clean imported HTML
+        function cleanImportedHtml(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Remove unwanted elements
+            const unwantedElements = doc.querySelectorAll('script, style, link, meta, head, title, iframe, noscript');
+            unwantedElements.forEach(el => el.remove());
+            
+            // Clean up inline styles
+            const styledElements = doc.querySelectorAll('[style]');
+            styledElements.forEach(el => el.removeAttribute('style'));
+            
+            // Return the cleaned HTML
+            return doc.body.innerHTML;
+        }
         
         // Initialize word count
         updateWordCount();
